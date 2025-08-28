@@ -81,7 +81,8 @@ with st.expander("👤 Enter Your Health Profile for Personalized Results", expa
         allergies = st.text_area("Known Allergies:", placeholder="e.g., Peanuts, Shellfish")
     with c2:
         sleep = st.text_input("Average Sleep per Night:", placeholder="e.g., 7 hours")
-        habits = st.selectbox("Smoking/Alcohol Habits:", ["None", "Occasionally", "Regularly"])
+        smoking = st.selectbox("Smoking Habits:", ["None", "Occasionally", "Regularly"])
+        alcohol = st.selectbox("Alcohol Habits:", ["None", "Occasionally", "Regularly"])
 
 st.markdown("---")
 
@@ -110,8 +111,10 @@ def guide_me_on(query, user_profile):
         profile_context += f"- Allergies: {user_profile['allergies']}\n"
     if user_profile['sleep']:
         profile_context += f"- Sleep Habits: {user_profile['sleep']}\n"
-    if user_profile['habits'] != "None":
-        profile_context += f"- Smoking/Alcohol Habits: {user_profile['habits']}\n"
+    if user_profile['smoking'] != "None":
+        profile_context += f"- Smoking Habits: {user_profile['smoking']}\n"
+    if user_profile['alcohol'] != "None":
+        profile_context += f"- Alcohol Habits: {user_profile['alcohol']}\n"
 
     system_prompt = (
         "You are a certified Dietician, Health Coach, and Fitness Expert. "
@@ -154,7 +157,8 @@ if st.button("Generate Health Report"):
         "conditions": conditions,
         "allergies": allergies,
         "sleep": sleep,
-        "habits": habits
+        "smoking": smoking,
+        'alcohol':alcohol
     }
     
     with st.spinner("Analyzing your profile and generating recommendations..."):
