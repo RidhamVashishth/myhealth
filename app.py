@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import google.generativeai as genai
 import traceback
+from datetime import date
 
 # Load environment variables
 load_dotenv()
@@ -23,65 +24,72 @@ except Exception as e:
 # This should be the first Streamlit command in your script
 st.set_page_config(page_title="HealthWise", layout="centered")
 
-# ---------------- Sidebar Content ----------------
-st.sidebar.header("Your Health Profile")
-st.sidebar.markdown("Provide your details for a more personalized experience.")
-
-# --- Basic Demographics ---
-age = st.sidebar.number_input("Age:", min_value=1, max_value=120, step=1)
-gender = st.sidebar.selectbox("Gender:", ["Male", "Female", "Other"])
-
-# --- BMI Calculator ---
-st.sidebar.subheader("⚖️ BMI Calculator")
-weight = st.sidebar.text_input("Weight (kg):")
-height = st.sidebar.text_input("Height (cm):")
-bmi_value = None # Initialize BMI value
-
-try:
-    weight_num = pd.to_numeric(weight)
-    height_num = pd.to_numeric(height)
-    if weight_num > 0 and height_num > 0:
-        bmi_value = weight_num / ((height_num / 100) ** 2)
-        st.sidebar.markdown(f"**Your BMI is:** `{bmi_value:.2f}`")
-    elif weight and height: # Show info only if both fields are touched
-        st.sidebar.warning("Please enter valid positive numbers.")
-except (ValueError, TypeError):
-    if weight or height: # Show info only if user starts typing
-        st.sidebar.info("Enter numerical values to calculate BMI.")
-
-st.sidebar.markdown("""
-**BMI Categories:**
-- 🟦 Underweight: BMI < 18.5
-- 🟩 Normal weight: 18.5 ≤ BMI < 25
-- 🟨 Overweight: 25 ≤ BMI < 30
-- 🟥 Obese: BMI ≥ 30
-""")
-
-# --- Lifestyle Information ---
-st.sidebar.subheader("Lifestyle")
-activity_level = st.sidebar.selectbox("Activity Level:", ["Sedentary", "Lightly Active", "Moderately Active", "Very Active"])
-health_goal = st.sidebar.text_input("Primary Health Goal:", placeholder="e.g., Lose Weight, Gain Muscle")
-diet_prefs = st.sidebar.text_input("Dietary Preferences:", placeholder="e.g., Vegetarian, Vegan, Gluten-Free")
-
-# --- Health History (Optional) ---
-st.sidebar.subheader("Health History (Optional)")
-st.sidebar.info("Providing these details will result in a much safer and more personalized response.")
-conditions = st.sidebar.text_area("Pre-existing Medical Conditions:", placeholder="e.g., Type 2 Diabetes, High Blood Pressure")
-allergies = st.sidebar.text_area("Known Allergies:", placeholder="e.g., Peanuts, Shellfish")
-sleep = st.sidebar.text_input("Average Sleep per Night:", placeholder="e.g., 7 hours")
-habits = st.sidebar.selectbox("Smoking/Alcohol Habits:", ["None", "Occasionally", "Regularly"])
-
-
 # ---------------- Main Content ----------------
-st.header(":green[MyHealthify]–Your Health & Fitness Guide 💊", divider="red")
+st.header(":green[HealthWise]–Your Personalized Health Guide 💊", divider="red")
 
-user_input = st.text_area("Ask me anything about Health, Diseases, or Fitness:", height=150)
+# --- User Profile Inputs in Main Area ---
+with st.expander("👤 Enter Your Health Profile for Personalized Results", expanded=True):
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Basic Demographics")
+        # Date of Birth input
+        dob = st.date_input("Date of Birth:", max_value=date.today(), value=date(2000, 1, 1))
+        # Calculate age
+        today = date.today()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        st.write(f"Your age is: **{age}**")
+        
+        gender = st.selectbox("Gender:", ["Male", "Female", "Other"])
+
+        st.subheader("Lifestyle")
+        activity_level = st.selectbox("Activity Level:", ["Sedentary", "Lightly Active", "Moderately Active", "Very Active"])
+        health_goal = st.text_input("Primary Health Goal:", placeholder="e.g., Lose Weight, Gain Muscle")
+        diet_prefs = st.text_input("Dietary Preferences:", placeholder="e.g., Vegetarian, Vegan")
+
+    with col2:
+        st.subheader("⚖️ BMI Calculator")
+        weight = st.text_input("Weight (kg):")
+        height = st.text_input("Height (cm):")
+        bmi_value = None # Initialize BMI value
+
+        try:
+            weight_num = pd.to_numeric(weight)
+            height_num = pd.to_numeric(height)
+            if weight_num > 0 and height_num > 0:
+                bmi_value = weight_num / ((height_num / 100) ** 2)
+                st.markdown(f"**Your BMI is:** `{bmi_value:.2f}`")
+            elif weight and height: # Show info only if both fields are touched
+                st.warning("Please enter valid positive numbers.")
+        except (ValueError, TypeError):
+            if weight or height: # Show info only if user starts typing
+                st.info("Enter numerical values to calculate BMI.")
+
+        st.markdown("""
+        **BMI Categories:**
+        - 🟦 Underweight: BMI < 18.5
+        - 🟩 Normal weight: 18.5 ≤ BMI < 25
+        - 🟨 Overweight: 25 ≤ BMI < 30
+        - 🟥 Obese: BMI ≥ 30
+        """)
+
+    st.subheader("Health History (Optional)")
+    st.info("Providing these details will result in a much safer and more personalized response.")
+    c1, c2 = st.columns(2)
+    with c1:
+        conditions = st.text_area("Pre-existing Medical Conditions:", placeholder="e.g., Type 2 Diabetes")
+        allergies = st.text_area("Known Allergies:", placeholder="e.g., Peanuts, Shellfish")
+    with c2:
+        sleep = st.text_input("Average Sleep per Night:", placeholder="e.g., 7 hours")
+        habits = st.selectbox("Smoking/Alcohol Habits:", ["None", "Occasionally", "Regularly"])
+
+st.markdown("---")
+
+# --- User Query Input ---
+user_input = st.text_area("Ask a specific question, or leave blank for a general health report:", height=150)
 
 # Gemini Response Function
 def guide_me_on(query, user_profile):
-    if not query.strip():
-        return "⚠️ Please enter a health-related question."
-
     # Construct a detailed context string from the user's profile
     profile_context = (
         f"Here is the user's health profile:\n"
@@ -116,7 +124,7 @@ def guide_me_on(query, user_profile):
         "'❌ I am an AI model and cannot provide medical advice, diagnosis, or recommend medication. Please consult a qualified doctor for any medical concerns.'\n\n"
     )
 
-    full_prompt = f"{system_prompt}\n{profile_context}\nUser's Question: {query}"
+    full_prompt = f"{system_prompt}\n{profile_context}\nUser's Request: {query}"
 
     try:
         response = model.generate_content(full_prompt)
@@ -127,6 +135,12 @@ def guide_me_on(query, user_profile):
 
 # Button to submit query
 if st.button("Generate Health Report"):
+    # Determine the query to send to the model
+    if user_input.strip():
+        query_for_gemini = user_input
+    else:
+        query_for_gemini = "Please provide a general health and wellness report based on my profile. Include advice on diet, exercise, and lifestyle improvements suitable for me."
+
     # Create a dictionary to hold all user profile data
     user_profile_data = {
         "age": age,
@@ -144,6 +158,6 @@ if st.button("Generate Health Report"):
     }
     
     with st.spinner("Analyzing your profile and generating recommendations..."):
-        answer = guide_me_on(user_input, user_profile_data)
+        answer = guide_me_on(query_for_gemini, user_profile_data)
         st.subheader(":blue[Your Personalized Health Report:]")
         st.markdown(answer)
