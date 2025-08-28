@@ -15,7 +15,7 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 # Set up the Gemini model
 # It's good practice to wrap this in a try-except block in case of initialization errors
 try:
-    model = genai.GenerativeModel("gemini-pro")
+    model = genai.GenerativeModel("gemini-2.0-flash")
 except Exception as e:
     st.error(f"Error initializing the AI model: {e}")
     st.stop() # Stop the app if the model fails to initialize
