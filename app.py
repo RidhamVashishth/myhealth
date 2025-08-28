@@ -21,7 +21,7 @@ except Exception as e:
 
 # ---------------- Page Configuration ----------------
 # This should be the first Streamlit command in your script
-st.set_page_config(page_title="MyHealthify", layout="centered")
+st.set_page_config(page_title="HealthWise", layout="centered")
 
 # ---------------- Sidebar Content ----------------
 st.sidebar.header("Your Health Profile")
